@@ -49,38 +49,42 @@ const createProduct = async (payload: any) => {
       category: {
         connect: { id: categoryId },
       },
-     variants: {
+        variants: {
         create: variants.map((v: any) => {
-          const color = v.color?? null;
-          const size = v.size ?? null;
-          const basePrice = Number(v.basePrice);
-          const sellPrice = Number(v.sellPrice)
-          const discount = Number(v.discount || 0); // %
-          // const finalSellPrice = Number(sellPrice - (sellPrice * discount) / 100)
-          const stockQuantity = Number(v.stockQuantity || 0);
-          return {
-            sku: v.sku,
-            variantName: v.variantName,
-            color,
-            size,
-            basePrice,
-            discount,
-            sellPrice,
-            // finalSellPrice,
-            
-            inventory: v.stockQuantity
-              ? { create: 
-                { 
-                 stockQuantity,
-                 SoldQuantity: 0,
-                 soldRevenue: 0,
-                 totalPriced: basePrice * stockQuantity,
-                  }
-             }
-              : undefined,
-          };
-        }),
-      },
+        const color = v.color ?? null;
+        const size = v.size ?? null;
+        const basePrice = Number(v.basePrice);
+        const discount = Number(v.discount || 0);
+
+        // default stockQuantity
+        const stockQuantity =
+          v.stockQuantity !== undefined ? Number(v.stockQuantity) : 0;
+
+        const sku = `${generateSlug(productData.name)}-${Math.floor(
+                    Math.random() * 10000
+                  )}`;
+
+        return {
+          sku,
+          variantName: v.variantName,
+          color,
+          size,
+          basePrice,
+          discount,
+
+          // ALWAYS create inventory
+          inventory: {
+            create: {
+              stockQuantity,
+              SoldQuantity: 0,
+              soldRevenue: 0,
+              totalPriced: basePrice * stockQuantity,
+            },
+          },
+        };
+      }),
+    },
+
       images: images?.length
         ? {
             create: images.map((img: any) => ({
@@ -130,15 +134,12 @@ const getAllProducts = async (
 if (query.minPrice !== undefined || query.maxPrice !== undefined) {
   where.variants = {
     some: {
-      ...(query.minPrice !== undefined && {
-        sellPrice: { gte: query.minPrice },
-      }),
-      ...(query.maxPrice !== undefined && {
-        sellPrice: { lte: query.maxPrice },
-      }),
+      ...(query.minPrice !== undefined && { basePrice: { gte: query.minPrice } }),
+      ...(query.maxPrice !== undefined && { basePrice: { lte: query.maxPrice } }),
     },
   };
 }
+
 
 
   // Age range
@@ -176,15 +177,15 @@ if (query.minPrice !== undefined || query.maxPrice !== undefined) {
     prisma.product.count({ where }),
   ]);
   // ADD finalSellPrice in RESPONSE
-  const formattedProducts = products.map(product => ({
-    ...product,
-    variants: product.variants.map(variant => ({
-      ...variant,
-      finalSellPrice:
-        variant.sellPrice -
-        (variant.sellPrice * (variant.discount ?? 0)) / 100,
-    })),
-  }));
+ const formattedProducts = products.map(product => ({
+  ...product,
+  variants: product.variants.map(variant => ({
+    ...variant,
+    sellPrice:
+      variant.basePrice - (variant.basePrice * (variant.discount ?? 0)) / 100,
+  })),
+}));
+
 
   const totalPages = Math.ceil(total / limit);
 
@@ -193,9 +194,6 @@ if (query.minPrice !== undefined || query.maxPrice !== undefined) {
     pagination: { total, page, limit, totalPages },
   };
 };
-
-
-
 
 const getProductById = async (id: string) => {
 const product = await prisma.product.findUnique({
@@ -216,12 +214,11 @@ const formattedProduct = {
   ...product,
   variants: product.variants.map((v) => ({
     ...v,
-    finalSellPrice: v.sellPrice - (v.sellPrice * (v.discount ?? 0)) / 100,
+   sellPrice: v.basePrice - (v.basePrice * (v.discount ?? 0)) / 100,
   })),
 };
 
 return formattedProduct;
-
 
 };
 
@@ -263,15 +260,15 @@ return formattedProduct;
       for (const v of variants) {
         let variantId = v.id;
 
-        const variantData = {
-          sku: v.sku,
-          variantName: v.variantName,
-          basePrice: v.basePrice,
-          sellPrice: v.sellPrice,
-          discount: v.discount,
-          color: v.color ?? null,
-          size: v.size ?? null,
-        };
+      const variantData = {
+        sku: v.sku,
+        variantName: v.variantName,
+        basePrice: v.basePrice,
+        discount: v.discount,
+        color: v.color ?? null,
+        size: v.size ?? null,
+      };
+        
 
         // Update or create variant
         if (variantId) {
@@ -351,7 +348,7 @@ return formattedProduct;
     if (result?.variants?.length) {
       result.variants = result.variants.map((v) => ({
         ...v,
-        finalSellPrice: v.sellPrice - ((v.sellPrice * (v.discount ?? 0)) / 100),
+        finalSellPrice: v.basePrice - ((v.basePrice * (v.discount ?? 0)) / 100),
       }));
     }
 

@@ -1,8 +1,6 @@
 import dotenv from "dotenv";
 import path from "path";
 
-
-// Load .env variables
 dotenv.config({ path: path.join(process.cwd(), ".env") });
 
 const config = {
@@ -10,8 +8,15 @@ const config = {
   port: process.env.PORT ? Number(process.env.PORT) : 5000,
   database_url: process.env.DATABASE_URL || "",
   frontend_url: process.env.FRONTEND_URL || "",
-  jwt_secret: process.env.JWT_SECRET as string,
 
+  jwt: {
+    access_secret: process.env.JWT_ACCESS_SECRET as string,
+    refresh_secret: process.env.JWT_REFRESH_SECRET as string,
+  },
 };
+
+if (!config.jwt.access_secret || !config.jwt.refresh_secret) {
+  throw new Error("JWT secrets are missing in .env");
+}
 
 export default config;

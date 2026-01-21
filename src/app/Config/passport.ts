@@ -1,11 +1,12 @@
 import passport from "passport";
 import { Strategy as JwtStrategy, ExtractJwt } from "passport-jwt";
 import { prisma } from "../lib/prisma";
+import config from ".";
 
 
 const options = {
   jwtFromRequest: ExtractJwt.fromAuthHeaderAsBearerToken(),
-  secretOrKey: process.env.JWT_SECRET!,
+  secretOrKey: config.jwt.access_secret!,
 };
 
 passport.use(

@@ -25,6 +25,16 @@ CREATE TABLE "User" (
 );
 
 -- CreateTable
+CREATE TABLE "RefreshToken" (
+    "id" TEXT NOT NULL,
+    "token" TEXT NOT NULL,
+    "userId" TEXT NOT NULL,
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+
+    CONSTRAINT "RefreshToken_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
 CREATE TABLE "Product" (
     "id" TEXT NOT NULL,
     "name" TEXT NOT NULL,
@@ -34,7 +44,6 @@ CREATE TABLE "Product" (
     "categoryId" TEXT NOT NULL,
     "ageMin" INTEGER,
     "ageMax" INTEGER,
-    "price" DECIMAL(10,2) NOT NULL,
     "isFeatured" BOOLEAN NOT NULL DEFAULT false,
     "status" "ProductStatus" NOT NULL DEFAULT 'draft',
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
@@ -74,7 +83,10 @@ CREATE TABLE "ProductVariant" (
     "productId" TEXT NOT NULL,
     "sku" TEXT NOT NULL,
     "variantName" TEXT,
-    "price" DECIMAL(10,2) NOT NULL,
+    "color" TEXT,
+    "size" TEXT,
+    "basePrice" DOUBLE PRECISION NOT NULL,
+    "discount" DOUBLE PRECISION DEFAULT 0,
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
 
     CONSTRAINT "ProductVariant_pkey" PRIMARY KEY ("id")
@@ -84,6 +96,9 @@ CREATE TABLE "ProductVariant" (
 CREATE TABLE "Inventory" (
     "variantId" TEXT NOT NULL,
     "stockQuantity" INTEGER NOT NULL,
+    "SoldQuantity" INTEGER NOT NULL,
+    "soldRevenue" DOUBLE PRECISION NOT NULL,
+    "totalPriced" DOUBLE PRECISION NOT NULL,
     "updatedAt" TIMESTAMP(3) NOT NULL,
 
     CONSTRAINT "Inventory_pkey" PRIMARY KEY ("variantId")
@@ -129,6 +144,9 @@ CREATE TABLE "OrderItem" (
 CREATE UNIQUE INDEX "User_email_key" ON "User"("email");
 
 -- CreateIndex
+CREATE UNIQUE INDEX "RefreshToken_token_key" ON "RefreshToken"("token");
+
+-- CreateIndex
 CREATE UNIQUE INDEX "Product_slug_key" ON "Product"("slug");
 
 -- CreateIndex
@@ -142,6 +160,9 @@ CREATE UNIQUE INDEX "ProductVariant_sku_key" ON "ProductVariant"("sku");
 
 -- CreateIndex
 CREATE UNIQUE INDEX "Order_orderNumber_key" ON "Order"("orderNumber");
+
+-- AddForeignKey
+ALTER TABLE "RefreshToken" ADD CONSTRAINT "RefreshToken_userId_fkey" FOREIGN KEY ("userId") REFERENCES "User"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE "Product" ADD CONSTRAINT "Product_brandId_fkey" FOREIGN KEY ("brandId") REFERENCES "Brand"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
