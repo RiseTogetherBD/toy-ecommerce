@@ -11,25 +11,55 @@ model User {
   email     String   @unique
   name      String?
   password  String
-  role      Role     @default(USER)
+  role      Role?    @default(USER)
+
   isActive  Boolean  @default(true)
+  isVerified Boolean @default(false)
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
-  orders    Order[]
-  refreshTokens  RefreshToken[]
+
+  orders              Order[]
+  refreshTokens       RefreshToken[]
+  emailVerifications  EmailVerification[]
+  passwordReset       PasswordReset[]
 }
 
 enum Role {
   ADMIN
   USER
+  VENDOR
 }
+
 model RefreshToken {
   id        String   @id @default(uuid())
   token     String   @unique
   userId    String
-  user      User     @relation(fields: [userId], references: [id])
+  deviceId  String?
+
+  isRevoked Boolean  @default(false)
+  expiresAt DateTime?
   createdAt DateTime @default(now())
+
+  user      User     @relation(fields: [userId], references: [id])
 }
+
+model EmailVerification {
+  id        String   @id @default(uuid())
+  token     String   @unique
+  userId    String
+  expiresAt DateTime
+  isUsed    Boolean  @default(false)
+
+  user      User     @relation(fields: [userId], references: [id])
+}
+model PasswordReset {
+  id        String   @id @default(uuid())
+  token     String   @unique
+  userId    String
+  expiresAt DateTime
+  user      User     @relation(fields: [userId], references: [id])
+}
+
 
 
 model Product {

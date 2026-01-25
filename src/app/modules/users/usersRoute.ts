@@ -14,10 +14,10 @@ userRouter.get("/test", (req, res) => {
 });
 
 // Protected routes
-userRouter.post("/", authenticate, auth(Role.ADMIN), usersController.register);
+userRouter.post("/", usersController.register);
 userRouter.get("/", authenticate, auth(Role.ADMIN), usersController.getAllUsers);
-userRouter.get("/:id", authenticate, auth(Role.ADMIN), usersController.getUserById);
-userRouter.put("/:id", authenticate, auth(Role.ADMIN), usersController.updateUser);
+userRouter.get("/:id", authenticate, auth(Role.ADMIN,Role.USER), usersController.getUserById);
+userRouter.put("/:id", authenticate, auth(Role.ADMIN,), usersController.updateUser);
 userRouter.delete("/:id", authenticate, auth(Role.ADMIN), usersController.deleteUser);
 
 

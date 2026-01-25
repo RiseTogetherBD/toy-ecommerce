@@ -7,7 +7,7 @@ import { Role } from "@prisma/client";
 
 const router = Router();
 
-router.post("/", authenticate, auth(Role.ADMIN), orderController.create);
+router.post("/",  authenticate, auth(Role.ADMIN), orderController.create);
 router.get("/", authenticate, auth(Role.ADMIN), orderController.getAll);
 router.patch("/:id/status", authenticate, auth(Role.ADMIN), orderController.updateStatus);
 
